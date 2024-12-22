@@ -5,17 +5,17 @@ import { useConfig } from 'nextra-theme-docs'
 
 const config: DocsThemeConfig = {
   logo: <img
-    src="/merak-logo.svg"
-    alt="Merak Protocol Logo"
+    src="/phad-logo.svg"
+    alt="Phad Framework Logo"
     style={{ height: '32px' }}
   />,
   project: {
-    link: 'https://github.com/0xobelisk/dubhe',
+    link: 'https://github.com/0xobelisk/phad',
   },
   chat: {
     link: 'https://discord.gg/nveFk3p6za',
   },
-  docsRepositoryBase: 'https://github.com/0xobelisk/dubhe-docs',
+  docsRepositoryBase: 'https://github.com/0xobelisk/phad-docs',
   footer: {
     content: 'Apache 2024 © Obelisk Labs.',
   },

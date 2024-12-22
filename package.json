@@ -1,7 +1,7 @@
 {
-  "name": "merak-site",
+  "name": "phad-site",
   "version": "0.0.1",
-  "description": "Meark site",
+  "description": "Phad site",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

@@ -1,6 +1,6 @@
 export default {
 	index: 'Introduction',
-	merak: 'Merak',
+	phad: 'Phad',
 	faq: 'FAQ',
 	contribute: 'Contribute',
 	community: {
