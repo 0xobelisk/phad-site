@@ -1,0 +1,333 @@
+# Use dubhe to migrate a contract
+
+## Setting up a project
+
+```bash
+➜  pnpm create dubhe
+Downloading registry.npmjs.org/create-dubhe/0.0.11: 8.98 MB/8.98 MB, done
+../Library/pnpm/store/v3/tmp/dlx-54343   | +149 +++++++++++++++
+Packages are hard linked from the content-addressable store to the virtual store.
+  Content-addressable store is at: /Users/wangningbo/Library/pnpm/store/v3
+  Virtual store is at:             ../Library/pnpm/store/v3/tmp/dlx-54343/node_modules/.pnpm
+../Library/pnpm/store/v3/tmp/dlx-54343   | Progress: resolved 149, reused 146, downloaded 3, added 149, done
+✔ Input your projectName. … dubhe-template-project
+✔ Pick your chain. › sui
+✔ Pick your platform. › Contract
+
+============================================================
+🎉 Project creation successful!
+📁 Project location: /Users/wangningbo/Project/dubhe-template-project
+------------------------------------------------------------
+Next steps:
+
+  cd dubhe-template-project
+  pnpm install
+
+============================================================
+```
+
+```bash
+cd dubhe-template-project && pnpm install
+```
+
+## Start a Local Node
+
+```bash
+➜  pnpm dubhe node
+
+Welcome to Dubhe
+                         --from team@obelisk
+   ________  ___  ___  ________  ___  ___  _______
+  |\   ___ \|\  \|\  \|\   __  \|\  \|\  \|\  ___ \
+  \ \  \_|\ \ \  \\\  \ \  \|\ /\ \  \\\  \ \   __/|
+   \ \  \ \\ \ \  \\\  \ \   __  \ \   __  \ \  \_|/__
+    \ \  \_\\ \ \  \\\  \ \  \|\  \ \  \ \  \ \  \_|\ \
+     \ \_______\ \_______\ \_______\ \__\ \__\ \_______\
+      \|_______|\|_______|\|_______|\|__|\|__|\|_______|
+
+
+🚀 Starting Local Node...
+  ├─ Faucet: Enabled
+  └─ Force Regenesis: Yes
+  └─ HTTP server: http://127.0.0.1:9000/
+  └─ Faucet server: http://127.0.0.1:9123/
+📝Accounts
+==========
+  ┌─ Account #0: 0xe7f93ad7493035bcd674f287f78526091e195a6df9d64f23def61a7ce3adada9(1000 SUI)
+  └─ Private Key: suiprivkey1qq3ez3dje66l8pypgxynr7yymwps6uhn7vyczespj84974j3zya0wdpu76v
+  ┌─ Account #1: 0x492404a537c32b46610bd6ae9f7f16ba16ff5a607d272543fe86cada69d8cf44(1000 SUI)
+  └─ Private Key: suiprivkey1qp6vcyg8r2x88fllmjmxtpzjl95gd9dugqrgz7xxf50w6rqdqzetg7x4d7s
+  ┌─ Account #2: 0xd27e203483700d837a462d159ced6104619d8e36f737bf2a20c251153bf39f24(1000 SUI)
+  └─ Private Key: suiprivkey1qpy3a696eh3m55fwa8h38ss063459u4n2dm9t24w2hlxxzjp2x34q8sdsnc
+  ┌─ Account #3: 0x018f1f175c9b6739a14bc9c81e7984c134ebf9031015cf796fefcef04b8c4990(1000 SUI)
+  └─ Private Key: suiprivkey1qzxwp29favhzrjd95f6uj9nskjwal6nh9g509jpun395y6g72d6jqlmps4c
+  ┌─ Account #4: 0x932f6aab2bc636a25374f99794dc8451c4e27c91e87083e301816ed08bc98ed0(1000 SUI)
+  └─ Private Key: suiprivkey1qzhq4lv38sesah4uzsqkkmeyjx860xqjdz8qgw36tmrdd5tnle3evxpng57
+  ┌─ Account #5: 0x9a66b2da3036badd22529e3de8a00b0cd7dbbfe589873aa03d5f885f5f8c6501(1000 SUI)
+  └─ Private Key: suiprivkey1qzez45sjjsepjgtksqvpq6jw7dzw3zq0dx7a4sulfypd73acaynw5jl9x2c
+==========
+⚠️WARNING: These accounts, and their private keys, are publicly known.
+Any funds sent to them on Mainnet or any other live network WILL BE LOST.
+
+```
+
+## Publish a contract
+
+```ts
+import { DubheConfig } from '@0xobelisk/sui-common';
+export const dubheConfig = {
+	name: 'counter',
+	description: 'counter contract',
+	schemas: {
+		counter: {
+			structure: {
+				value: 'StorageValue<u32>',
+			},
+			events: [
+				{
+					name: 'Increment',
+					fields: {
+						value: 'u32',
+					},
+				},
+			],
+			errors: [
+				{
+					name: 'InvalidIncrement',
+					code: 0,
+					description: 'Increment must be greater than zero',
+				},
+			]
+		},
+	},
+} as DubheConfig;
+```
+
+```sui move
+module counter::counter_system {
+    use counter::counter_schema::Counter;
+    use counter::counter_event_increment;
+    use counter::counter_error_invalid_increment;
+
+    public entry fun inc(counter: &mut Counter, number: u32) {
+        // Check if the increment value is valid.
+        counter_error_invalid_increment::require(number > 0);
+        counter.borrow_mut_value().mutate!(|value| {
+            // Increment the counter value.
+            *value =  *value + number;
+            // Emit an event to notify the increment.
+            counter_event_increment::emit(number);
+        });
+    }
+
+    public fun get(counter: &Counter): u32 {
+        counter.borrow_value().get()
+    }
+}
+```
+
+```bash
+➜  pnpm dubhe publish --network localnet --gas-budget 2000000000
+
+Updated Dubhe dependency in /Volumes/project/dubhe/packages/create-dubhe/template/contract/sui-template/contracts/counter/Move.toml for localnet.
+dappsObjectId 0xa310e9ec9027642c9d99aefa7d38c785e3f17b626815ca1e8e9891837e4325ad
+
+🚀 Starting Contract Publication...
+  ├─ Project: /Volumes/project/dubhe/packages/create-dubhe/template/contract/sui-template/contracts/counter
+  ├─ Network: localnet
+  ├─ ChainId: fc159356
+  ├─ Validating Environment...
+  └─ Account: 0x932f6aab2bc636a25374f99794dc8451c4e27c91e87083e301816ed08bc98ed0
+
+📦 Building Contract...
+  └─ Build successful
+
+🔄 Publishing Contract...
+  ├─ Processing publication results...
+  ├─ Package ID: 0x50c713633ad8b82637e21030c8b6fb11db1cc8157fafb0d1aba4afa4327ba968
+  ├─ Schema Hub: 0x839919ed6c10b7c74c84c8f519cb8f73fa7fc9af298cd9b325183a64c541e7fb
+  ├─ Upgrade Cap: 0xb047bc44789a06012a60a622481187f6ced67954936422d38528ce0c8bd13991
+  └─ Transaction: HpT4BSp7QPeH9NTowsxpQ6Y3XGFY181a34qc7vsYhhLe
+
+⚡ Executing Deploy Hook...
+  ├─ Hook execution successful
+  ├─ Transaction: H5hLQ5MjtBrhTCRzdPeD7vAbcwswVcnwZaez6Wen7Sxq
+
+📋 Created Schemas:
+  ├─ 0x50c713633ad8b82637e21030c8b6fb11db1cc8157fafb0d1aba4afa4327ba968::counter_schema::Counter
+     └─ ID: 0xb8ae28ef9e9cc9c253dd77ec7c92e156c559fa74c086db088ff5fb83afe5606c
+Update deploy log: /Volumes/project/dubhe/packages/create-dubhe/template/contract/sui-template/contracts/counter/.history/sui_localnet/latest.json
+
+✅ Contract Publication Complete
+
+```
+## Migrate a contract
+
+Now we need to upgrade the contract, we put a maximum limit on the input number, it must be less than 100.
+
+```sui move sui move filename="counter_system.move" {8} copy showLineNumbers
+module counter::counter_system {
+    use counter::counter_schema::Counter;
+    use counter::counter_event_increment;
+    use counter::counter_error_invalid_increment;
+
+    public entry fun inc(counter: &mut Counter, number: u32) {
+        // Check if the increment value is valid.
+        counter_error_invalid_increment::require(number > 0 && number < 100);
+        counter.borrow_mut_value().mutate!(|value| {
+            // Increment the counter value.
+            *value =  *value + number;
+            // Emit an event to notify the increment.
+            counter_event_increment::emit(number);
+        });
+    }
+
+    public fun get(counter: &Counter): u32 {
+        counter.borrow_value().get()
+    }
+}
+```
+After modifying the contract, we upgrade.
+
+```bash
+➜  pnpm dubhe upgrade --network localnet
+
+NCLUDING DEPENDENCY Dubhe
+INCLUDING DEPENDENCY Sui
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING counter
+
+🚀 Starting Upgrade Process...
+📋 OldPackageId: 0x50c713633ad8b82637e21030c8b6fb11db1cc8157fafb0d1aba4afa4327ba968
+📋 UpgradeCap Object Id: 0xb047bc44789a06012a60a622481187f6ced67954936422d38528ce0c8bd13991
+📋 OldVersion: 1
+counter PackageId: 0x56663444845847f62186bf9abac9b9d3f4e4e6359a996b512a15383ff704a79c
+counter Version: 2
+Upgrade Transaction Digest: AAUDQeT3yteDsGCDF5vBddmWFX5pKwMupeEmGcYcnLWq
+Update deploy log: /Volumes/project/dubhe/packages/create-dubhe/template/contract/sui-template/contracts/counter/.history/sui_localnet/latest.json
+```
+
+If you want to modify the previous Counter's Schema structure it is also supported.
+We add the last_value field to store the last number, and add an event to throw the stored last_value.
+
+```ts move filename="dubhe.config.ts" {9, 19-24} copy showLineNumbers
+import { DubheConfig } from '@0xobelisk/sui-common';
+
+export const dubheConfig = {
+	name: 'counter',
+	description: 'counter contract',
+	schemas: {
+		counter: {
+			structure: {
+				value: 'StorageValue<u32>',
+				last_value: 'StorageValue<u32>',
+			},
+			events: [
+				{
+					name: 'Increment',
+					fields: {
+						value: 'u32',
+					},
+				},
+				{
+					name: 'LastValue',
+					fields: {
+						value: 'u32',
+					},
+				},
+			],
+			errors: [
+				{
+					name: 'InvalidIncrement',
+					code: 0,
+					description: 'Increment must be greater than zero',
+				},
+			]
+		},
+	},
+} as DubheConfig;
+```
+After modifying the config file, we need to execute the schemagen command
+```bash
+pnpm dubhe schemagen
+```
+
+Then we start writing the contract.
+```sui move sui move filename="counter_system.move" {11-14} copy showLineNumbers
+module counter::counter_system {
+    use counter::counter_schema::Counter;
+    use counter::counter_event_increment;
+    use counter::counter_event_last_value;
+    use counter::counter_error_invalid_increment;
+
+    public entry fun inc(counter: &mut Counter, number: u32) {
+        // Check if the increment value is valid.
+        counter_error_invalid_increment::require(number > 0 && number < 100);
+
+        let last_value = counter.borrow_value().get();
+        counter.borrow_mut_last_value().set(last_value);
+        // Emit an event to notify the last_value.
+        counter_event_last_value::emit(last_value);
+
+        counter.borrow_mut_value().mutate!(|value| {
+            // Increment the counter value.
+            *value =  *value + number;
+            // Emit an event to notify the increment.
+            counter_event_increment::emit(number);
+        });
+    }
+
+    public fun get(counter: &Counter): u32 {
+        counter.borrow_value().get()
+    }
+}
+```
+
+Since we've changed Counter's Schema, we need to migrate the Schema, but don't worry, the migration has already been automated by Dubhe, so you just need to write your own logic.
+You need to write a migrate_to_v2 method that calls Schema's migrate method.
+```sui move sui move filename="scripts/migrate.move" {11-16} copy showLineNumbers
+module counter::migrate {
+  use sui::package::UpgradeCap;
+  use counter::counter_schema::Counter;
+
+  const ON_CHAIN_VERSION: u32 = 0;
+
+  public fun on_chain_version(): u32 {
+    ON_CHAIN_VERSION
+  }
+
+  public entry fun migrate_to_v2(counter: &mut Counter, cap: &UpgradeCap) {
+    counter.migrate(cap);
+
+    // Your logic...
+    let last_value = counter.borrow_value().get();
+    counter.borrow_mut_last_value().set(last_value);
+  }
+}
+```
+
+Now everything is ready to be upgraded.
+
+```bash
+➜  pnpm dubhe upgrade --network localnet
+
+🚀 Starting Migration for counter...
+📋 Migration Fields: [ { name: 'last_value', type: 'StorageValue<u32>' } ]
+
+INCLUDING DEPENDENCY Dubhe
+INCLUDING DEPENDENCY Sui
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING counter
+
+🚀 Starting Upgrade Process...
+📋 OldPackageId: 0x56663444845847f62186bf9abac9b9d3f4e4e6359a996b512a15383ff704a79c
+📋 UpgradeCap Object Id: 0xb047bc44789a06012a60a622481187f6ced67954936422d38528ce0c8bd13991
+📋 OldVersion: 2
+counter PackageId: 0x2e36ad09f7773f7fcbfd9dd33edad85b6c57c0dab8113adf9df34e582ee98939
+counter Version: 3
+Upgrade Transaction Digest: FaP8Wz2k4d8FrVaD3dSxXswnvebU9mRnP1XWJFMxsWPE
+Update deploy log: /Volumes/project/dubhe/packages/create-dubhe/template/contract/sui-template/contracts/counter/.history/sui_localnet/latest.json
+```
+
+Now the contract has been successfully upgraded.
+You'll need to manually call migrate_to_v2 to complete the last step.

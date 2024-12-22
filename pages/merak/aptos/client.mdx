@@ -1,0 +1,207 @@
+---
+title: Client - Dubhe
+description: Learn how to use the Aptos SDK.
+---
+
+# Dubhe Client SDK for Aptos
+
+Before getting started with Dubhe Client SDK, please install the required dependencies:
+
+```bash
+pnpm install @0xobelisk/aptos-client @0xobelisk/aptos-common
+```
+
+> Note: @0xobelisk/aptos-common contains essential configuration type definitions like DubheConfig, which are necessary for contract development.
+
+Dubhe is a client-agnostic SDK that supports various platforms including browsers, Node.js, and the COCOS game engine. It provides a simple interface to interact with your Aptos Move contracts.
+
+## Getting Started
+
+### Prerequisites
+
+Before using the SDK, make sure you have:
+
+1. Created and deployed your contract using the Dubhe CLI
+2. Obtained the `packageId` after deployment
+
+### Data Model Setup
+
+First, define your contract's configuration using `DubheConfig`:
+
+```typescript
+import { DubheConfig } from "@0xobelisk/aptos-common";
+
+export const dubheConfig = {
+  name: "counter",
+  description: "counter",
+  systems: ["counter"],
+  schemas: {
+    counter: {
+      structure: {
+        value: "StorageValue<u32>",
+      },
+    },
+  },
+} as DubheConfig;
+```
+
+Generate the contract code using CLI:
+
+```bash
+pnpm dubhe schemagen
+```
+
+### Initializing the Client
+
+The Dubhe client can be initialized in several ways:
+
+1. Using mnemonics
+2. Using secretKey (base64 or hex)
+3. If neither is provided, a random 24-word mnemonic will be generated
+
+```typescript
+import { Dubhe, Network } from "@0xobelisk/aptos-client";
+
+// Using mnemonics
+const dubhe = new Dubhe({
+  mnemonics: "your mnemonic words...",
+  networkType: Network.TESTNET,
+  packageId: "YOUR_PACKAGE_ID",
+  metadata: metadata,
+});
+
+// Using secret key
+const dubhe = new Dubhe({
+  secretKey: "your-secret-key",
+  networkType: Network.TESTNET,
+  packageId: "YOUR_PACKAGE_ID",
+  metadata: metadata,
+});
+```
+
+### Account Management
+
+The SDK provides various account management functions:
+
+```typescript
+// Get current address
+const address = dubhe.currentAddress();
+
+// Switch account using derive path
+dubhe.switchAccount({
+  accountIndex: 2,
+  isExternal: false,
+  addressIndex: 10,
+});
+
+// Get balance
+const balance = await dubhe.getBalance(address);
+
+// Request faucet tokens (testnet)
+await dubhe.requestFaucet(address, 50000000);
+```
+
+### Executing Transactions
+
+To call contract methods:
+
+```typescript
+// Execute transaction
+const response = await dubhe.tx.counter_system.increase();
+await dubhe.waitForTransaction(response.hash);
+
+// For wallet integration (raw transaction)
+const tx = await dubhe.tx.counter_system.increase({ isRaw: true });
+const response = await dubhe.signAndSendTxnWithPayload({ payload: tx });
+```
+
+### Querying Data
+
+To query contract state:
+
+```typescript
+// Simple query
+const result = await dubhe.query.counter_system.get();
+
+// Query with parameters and type arguments
+const result = await dubhe.query.counter_system.get({
+  params: [...],
+  typeArguments: [...]
+});
+```
+
+### Transaction Building
+
+The SDK provides flexible transaction building options:
+
+```typescript
+// Generate transaction payload
+const payload = await dubhe.generateTransactionPayload({
+  target: `${packageId}::module_name::function_name`,
+  typeArguments: [...],
+  params: [...]
+});
+
+// Build complete transaction
+const transaction = await dubhe.buildTransaction({
+  sender: address,
+  contractAddress: packageId,
+  moduleName: "module_name",
+  funcName: "function_name",
+  typeArguments: [...],
+  params: [...]
+});
+```
+
+### View Functions
+
+For reading contract state:
+
+```typescript
+const result = await dubhe.viewFunction({
+  contractAddress: packageId,
+  moduleName: "module_name",
+  funcName: "function_name",
+  params: [...],
+  typeArguments: [...]
+});
+```
+
+### Supported Types
+
+The SDK supports various parameter and return types:
+
+- Basic types (u8, u16, u32, u64, u128, u256)
+- Boolean
+- String
+- Vector
+- Struct
+- EntryFunctionArguments
+- TypeArguments
+- Custom Move types
+
+## Transaction Structure
+
+Both query and transaction methods accept a parameter structure with the following fields:
+
+```typescript
+{
+  sender?: AccountAddressInput;  // Optional: Transaction sender
+  params?: Array<
+        EntryFunctionArgumentTypes | SimpleEntryFunctionArgumentTypes
+      >;            // Optional: Array of parameters
+  typeArguments?: Array<TypeArgument>;     // Optional: Generic type arguments
+  isRaw?: boolean;             // Optional: Return raw transaction instead of executing
+}
+```
+
+## Best Practices
+
+1. Always handle transaction responses and wait for confirmation
+2. Use proper error handling for transaction failures
+3. Consider using raw transactions for wallet integrations
+4. Implement proper timeout handling for network requests
+
+## Support
+
+For more information or support, please visit our GitHub repository or join our community channels.

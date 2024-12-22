@@ -1,0 +1,50 @@
+# Use dubhe to test a contract
+
+We'll start by creating a test file.
+```bash
+touch contracts/counter/sources/tests/booster.move
+```
+`deploy_dapp_for_testing` is the test method that Dubhe automatically generates for you.
+Let's write the test.
+
+ ```sui move
+#[test_only]
+module counter::booster_test {
+    use sui::test_scenario;
+    use counter::booster_system;
+    use counter::booster_schema::Booster;
+    use counter::init_test;
+
+    #[test]
+    public fun inc() {
+        let (scenario, dapp)  = init_test::deploy_dapp_for_testing(@0xA);
+        let mut booster = test_scenario::take_shared<Booster>(&scenario);
+
+        assert!(booster.borrow_number().get() == 0);
+
+        booster_system::inc(&mut booster, 10);
+        assert!(booster.borrow_number().get() == 10);
+
+        booster_system::inc(&mut booster, 10);
+        assert!(booster.borrow_number().get() == 20);
+
+        test_scenario::return_shared(booster);
+        dapp.distroy_dapp_for_testing();
+        scenario.end();
+    }
+}
+```
+
+Let's run the Test command to check for syntax errors.
+```bash
+➜  pnpm dubhe test
+🚀 Running move test
+Total number of linter warnings suppressed: 1 (unique lints: 1)
+INCLUDING DEPENDENCY Dubhe
+INCLUDING DEPENDENCY Sui
+INCLUDING DEPENDENCY MoveStdlib
+BUILDING counter
+Running Move unit tests
+[ PASS    ] counter::counter_test::inc
+Test result: OK. Total tests: 1; passed: 1; failed: 0
+```

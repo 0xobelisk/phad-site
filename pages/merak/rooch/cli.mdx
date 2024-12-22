@@ -1,0 +1,106 @@
+---
+title: CLI - Dubhe
+description: Learn why we use SDK.
+---
+
+# Dubhe CLI for Rooch
+
+Before getting started with Dubhe CLI, please install the required dependencies:
+
+```bash
+pnpm install -D @0xobelisk/rooch-cli @0xobelisk/rooch-common
+```
+
+> Note: @0xobelisk/rooch-common contains essential configuration type definitions like DubheConfig.
+
+## The Dubhe CLI
+
+The Dubhe CLI is a development toolkit for building and managing Dubhe projects on the Rooch blockchain.
+
+Core features:
+
+1. [`publish`](#publish): Deploy your Dubhe projects to any Rooch network (mainnet/testnet/devnet/localnet)
+2. [`localnode`](#localnode): Manage local Rooch node for development
+3. [`test`](#test): Run tests for Dubhe contracts
+
+## Installation
+
+The CLI should be installed as a project dependency rather than globally. When you create a new project using `pnpm create dubhe`, the CLI is automatically added as a dev dependency.
+
+## Using the CLI
+
+Some commands expect a dubhe config in the same folder where the CLI is being executed. This includes `publish`.
+
+`localnode` can be executed anywhere.
+
+## Commands
+
+### `publish`
+
+Deploy Dubhe contracts to Rooch network. This tool will use the `dubhe.config.ts` to detect all systems and schemas to deploy them to the specified network.
+
+Before deploying the contract, please ensure:
+
+1. You have sufficient tokens in your account for deployment fees
+2. For testnet/devnet/localnet deployments, ensure your local node is running if using localnet
+
+```bash
+dubhe publish --network <network> [--config-path <path>] [--named-addresses <addresses>]
+
+Options:
+  --network           Target network (mainnet/testnet/devnet/localnet)
+  --config-path       Config file path (default: "dubhe.config.ts")
+  --named-addresses   Named addresses in format "name1=address1,name2=address2"
+```
+
+### `localnode`
+
+Manage local Rooch node.
+
+```bash
+dubhe localnode <action> [options]
+
+Actions:
+  start     Start local node
+  stop      Stop local node
+  status    Check node status
+  restart   Restart local node
+
+Options:
+  --background, -b    Run node in background mode
+```
+
+Local RPC endpoint: `http://127.0.0.1:9000`
+
+Note: Make sure your local node is running properly before using other commands that require a local node (e.g., `publish --network localnet`).
+
+### `test`
+
+Run tests for Dubhe contracts.
+
+```bash
+dubhe test [--package-path <path>]
+
+Options:
+  --package-path    Path to package directory (default: ".")
+```
+
+## Environment Setup
+
+Some commands require environment variables to be set:
+
+- `PRIVATE_KEY`: Required for deployment operations
+- Can be set up using a `.env` file in your project root
+
+When using the deployer, you must set the private key using the `PRIVATE_KEY` environment variable. You can make this easier by using [`dotenv`](https://www.npmjs.com/package/dotenv) before running commands.
+
+## Network Support
+
+The CLI supports the following networks:
+
+- Mainnet
+- Testnet
+- Devnet
+- Localnet
+
+Make sure to have your local node running when using localnet for development and testing.

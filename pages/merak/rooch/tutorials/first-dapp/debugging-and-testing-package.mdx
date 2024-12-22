@@ -1,0 +1,83 @@
+# Debugging-And-Testing-Package
+
+About Testing and Debugging,Dubhe Using Native Sui Move Way to slove this process.
+
+https://docs.sui.io/guides/developer/first-app/build-test#testing-a-package
+https://docs.sui.io/guides/developer/first-app/debug
+
+In addition to this Dubhe generates tool functions based on the official native base design
+
+in script/deploy_hook.move
+
+```move
+#[test_only]
+
+  public fun deploy_hook_for_testing(): (Scenario, SchemaHub, Dapps) {
+    let mut scenario = test_scenario::begin(@0xA);
+    {
+      let ctx = test_scenario::ctx(&mut scenario);
+      dapps_schema::init_dapps_for_testing(ctx);
+      schema_hub::init_schema_hub_for_testing(ctx);
+      test_scenario::next_tx(&mut scenario,@0xA);
+    };
+    let mut dapps = test_scenario::take_shared<Dapps>(&scenario);
+    let mut schema_hub = test_scenario::take_shared<SchemaHub>(&scenario);
+    let ctx = test_scenario::ctx(&mut scenario);
+    let clock = clock::create_for_testing(ctx);
+    let upgrade_cap = package::test_publish(@0x42.to_id(), ctx);
+    run(&mut schema_hub, &mut dapps, &upgrade_cap, &clock, ctx);
+    clock::destroy_for_testing(clock);
+    upgrade_cap.make_immutable();
+    test_scenario::next_tx(&mut scenario,@0xA);
+    (scenario, schema_hub, dapps)
+  }
+```
+
+for your project,you can use this function to quick start your testing process.
+
+for example:
+
+```move
+#[test]
+    public fun assets_create() {
+        let (mut scenario, schema_hub, dapps) = deploy_hook_for_testing();
+
+        let mut assets = test_scenario::take_shared<Assets>(&scenario);
+
+        let name = ascii::string(b"Obelisk Coin");
+        let symbol = ascii::string(b"OBJ");
+        let description = ascii::string(b"Obelisk Coin");
+        let url = ascii::string(b"");
+        let info = ascii::string(b"Obelisk Coin");
+        let decimals = 9;
+        create_assets(&mut assets, name, symbol, description, decimals, url, info, &mut scenario);
+        create_assets(&mut assets, name, symbol, description, decimals, url, info, &mut scenario);
+
+        let metadata = assets.borrow_mut_metadata().get(0);
+        assert!(metadata == assets_metadata::new(name, symbol, description, decimals, url, info), 0);
+        assert!(2 == assets.borrow_mut_next_asset_id().get(), 0);
+
+        let ctx = test_scenario::ctx(&mut scenario);
+        assets_system::mint(&mut assets, 0, ctx.sender(), 100, ctx);
+        assets_system::mint(&mut assets, 1, ctx.sender(), 100, ctx);
+        assert!(assets_system::balance_of(&assets, 0, ctx.sender()) == 100, 0);
+        assert!(assets_system::balance_of(&assets, 0, @0x10000) == 0, 0);
+        assert!(assets_system::supply_of(&assets, 0) == 100, 0);
+        assert!(assets_system::owned_assets(&assets, ctx.sender()) == vector[0, 1], 0);
+
+        debug::print(&assets_system::owned_assets(&assets, ctx.sender()));
+        assets_system::transfer(&mut assets, 0, @0x0002, 50, ctx);
+        assert!(assets_system::balance_of(&assets, 0, ctx.sender()) == 50, 0);
+        assert!(assets_system::balance_of(&assets, 0, @0x0002) == 50, 0);
+        assert!(assets_system::supply_of(&assets, 0) == 100, 0);
+
+        assets_system::burn(&mut assets, 0, ctx.sender(), 50, ctx);
+        assert!(assets_system::balance_of(&assets, 0, ctx.sender()) == 0, 0);
+        assert!(assets_system::supply_of(&assets, 0) == 50, 0);
+
+        test_scenario::return_shared<Assets>(assets);
+        test_scenario::return_shared<SchemaHub>(schema_hub);
+        test_scenario::return_shared<Dapps>(dapps);
+        test_scenario::end(scenario);
+    }
+```

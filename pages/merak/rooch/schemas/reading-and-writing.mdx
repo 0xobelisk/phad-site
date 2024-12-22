@@ -1,0 +1,112 @@
+---
+title: Reading and writing to Schemas
+description: Reading and writing to Schemas
+---
+
+## Reading and writing to Schemas
+
+### Access to Schemas via code-generated libraries
+
+> Accessing Schemas via the libraries generated with the `schemagen` tool is the recommended way to use Schemas.
+
+The `schemagen` tool of the Obelisk CLI can create libraries for each schema that wraps the low-level API of Schemas and types the results.
+
+Assume the following configuration exists.
+
+```tsx
+// definition of MySchema
+import { DubheConfig } from '@0xobelisk/sui-common';
+
+export const dubheConfig = {
+  name: "example",
+  description: "example desc",
+  schemas: {
+    student_management: {
+        data: [
+          {
+              name: "Class",
+              fields: {
+                    name: "string",
+                    teacher: "string",
+              },
+          },
+          {
+              name: "Student",
+              fields: {
+                    name: "string",
+                    age: "u8",
+                    class: "Class",
+              },
+         }
+      ],
+        structure: {
+         next_student_id: 'StorageValue<u32>',
+         student_info: 'StorageMap<u32, Student>',
+     },
+        events: [
+            {
+                name: "StudentAdded",
+                fields: {
+                        student_id: "u32",
+                        student: "Student",
+                },
+            },
+            {
+                name: "StudentRemoved",
+                fields: {
+                        student_id: "u32",
+                },
+            },
+        ]
+    }
+  },
+} as DubheConfig;
+```
+
+It's a good idea to make a contains judgement before adding and removing records.
+
+**Existence of a record**
+
+```sui move
+student_management.borrow_next_student_id().contains_key()
+student_management.borrow_student_info().contains_key(0)
+```
+
+**Adding a record && Updating a record**
+
+```rust
+student_management.borrow_mut_next_student_id().set(0);
+student_management.borrow_mut_student_info().set(
+    0,
+    student_management_student::new(
+        "Bob",
+        10,
+        student_management_class::new("Class 1", "Bob teacher")
+));
+
+// update
+student_management.borrow_mut_student_info().mutate!(0, |student| {
+    *student = student_management_student::new(
+        "Bob",
+        10,
+        student_management_class::new("Class 1", "Bob teacher")
+)});
+```
+
+**Deleting a record**
+
+```rust
+student_management.borrow_mut_next_student_id().remove();
+student_management.borrow_mut_student_info().remove(0);
+```
+
+**Retrieving a record**
+
+Make sure the record exists before getting
+
+```rust
+let next_student_id = student_management.borrow_next_student_id().get();
+let maybe_next_student_id = student_management.borrow_next_student_id().try_get();
+let student = student_management.borrow_student_info().get(0);
+let maybe_student = student_management.borrow_student_info().try_get(0);
+```

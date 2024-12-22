@@ -1,0 +1,177 @@
+# Writing-System-Logic-And-Publish
+
+```
+contracts/counter/
+├── sources/
+│   ├── codegen/
+│   │   ├── schemas/
+│   │   │   ├── counter.move
+│   │   │   ├── dapp_key.move
+│   │   │   └── schema_hub.move
+│   │   └── script/
+│   │       ├── deploy_hook.move
+│   │       └── migrate.move
+│   └── systems/
+│       └── counter.move
+└── Move.toml
+```
+
+To begin, open a terminal or console at the location you plan to store your dapp. Use the pnpm create dubhe command to create an initia dapp by dubhe with the name 101:
+
+```bash
+touch contracts/counter/sources/systems/counter.move
+```
+
+After imports, we can check counter schema in the `counter_schema.move` file.
+
+```move
+  module counter::counter_schema {
+
+  use std::ascii::String;
+
+  use std::ascii::string;
+
+  use initia::package::UpgradeCap;
+
+  use std::type_name;
+
+  use dubhe::dapps_system;
+
+  use dubhe::storage_migrate;
+
+  use dubhe::dapps_schema::Dapps;
+
+  use dubhe::storage_value::{Self, StorageValue};
+
+  use dubhe::storage_map::{Self, StorageMap};
+
+  use dubhe::storage_double_map::{Self, StorageDoubleMap};
+
+  use counter::dapp_key::DappKey;
+
+  use initia::dynamic_field as df;
+
+  public struct Counter has key, store {
+    id: UID,
+  }
+
+  public fun borrow_value(self: &Counter): &StorageValue<u32> {
+    storage_migrate::borrow_field(&self.id, b"value")
+  }
+
+  public(package) fun borrow_mut_value(self: &mut Counter): &mut StorageValue<u32> {
+    storage_migrate::borrow_mut_field(&mut self.id, b"value")
+  }
+
+  public(package) fun create(ctx: &mut TxContext): Counter {
+    let mut id = object::new(ctx);
+    storage_migrate::add_field<StorageValue<u32>>(&mut id, b"value", storage_value::new());
+    Counter { id }
+  }
+
+  public fun migrate(_counter: &mut Counter, _cap: &UpgradeCap) {}
+
+  // ======================================== View Functions ========================================
+
+  public fun get_value(self: &Counter): Option<u32> {
+    self.borrow_value().try_get()
+  }
+
+  // =========================================================================================================
+}
+```
+
+- Part 1: Imports - Bring the counter schema that Dubhe CLI automatically generated for us in the previous section into the program space
+
+```move
+module counter::counter_system {
+    use counter::counter_schema::Counter;
+}
+```
+
+- Part 2: Data Change Method Definition - In the example, we write a counter for the simplest application, and we implement a method to increase it.
+
+```move
+module counter::counter_system {
+    use counter::counter_schema::Counter;
+
+    public entry fun inc(counter: &mut Counter) {
+        counter.borrow_mut_value().mutate!(|value| *value = *value + 1);
+    }
+}
+```
+
+- Part 3: Data View method - Define a method to query the current value of the counter.
+
+```move
+module counter::counter_system {
+    use counter::counter_schema::Counter;
+
+    public entry fun inc(counter: &mut Counter) {
+        counter.borrow_mut_value().mutate!(|value| *value = *value + 1);
+    }
+
+    public fun get(counter: &Counter): u32 {
+        counter.borrow_value().get()
+    }
+}
+```
+
+## Build With Publish
+
+using simple one command:
+
+```bash
+pnpm run setup:testnet
+```
+
+![deploy](/initia/deploy.png)
+
+if show the error like this:
+
+```bash
+Error: Account balance is 0, need to get testnet coins
+```
+
+you can get testnet coins from the faucet to make sure you account has enough gas token to deploy your dapp.
+
+```bash
+pnpm run faucet testnet
+```
+
+the correct output should be like this:
+![faucet](/initia/faucet.png)
+
+or follow the steps:
+
+- Part 1: account generate
+
+```bash
+pnpm run account:gen
+```
+
+- Part 2: account balance check
+
+```bash
+pnpm run check-balance
+```
+
+if show the error like this:
+
+```bash
+Error: Account balance is 0, need to get testnet coins
+```
+
+you can get testnet coins from the faucet to make sure you account has enough gas token to deploy your dapp.
+
+- Part 3: faucet gas token from testnet
+
+```bash
+pnpm run faucet testnet
+```
+
+- Part 4: deploy on testnet
+
+```bash
+pnpm run deploy:testnet
+```

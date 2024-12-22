@@ -1,0 +1,127 @@
+---
+title: CLI - Dubhe
+description: Learn why we use SDK.
+---
+
+# Dubhe CLI for Initia
+
+Before getting started with Dubhe CLI, please install the required dependencies:
+
+```bash
+pnpm install -D @0xobelisk/initia-cli @0xobelisk/initia-common
+```
+
+> Note: @0xobelisk/initia-common contains essential configuration type definitions like DubheConfig.
+
+## The Dubhe CLI
+
+The Dubhe CLI is a development toolkit for building and managing Dubhe projects on the Initia blockchain.
+
+Core features:
+
+1. [`publish`](#publish): Deploy your Dubhe projects to any Initia network (mainnet/testnet/devnet/localnet)
+2. [`localnode`](#localnode): Manage local Initia node for development
+3. [`faucet`](#faucet): Interface with Initia faucets to fund addresses on testnet/devnet/localnet
+4. [`test`](#test): Run tests for Dubhe contracts
+
+## Installation
+
+The CLI should be installed as a project dependency rather than globally. When you create a new project using `pnpm create dubhe`, the CLI is automatically added as a dev dependency.
+
+## Using the CLI
+
+Some commands expect a dubhe config in the same folder where the CLI is being executed. This includes `publish`.
+
+`faucet` and `localnode` can be executed anywhere.
+
+## Commands
+
+### `publish`
+
+Deploy Dubhe contracts to Initia network. This tool will use the `dubhe.config.ts` to detect all systems and schemas to deploy them to the specified network.
+
+Before deploying the contract, please ensure:
+
+1. You have sufficient tokens in your account for deployment fees
+2. For testnet/devnet/localnet deployments, you can get test tokens via `dubhe faucet`
+3. For localnet deployments, ensure your local node is running
+
+```bash
+dubhe publish --network <network> [--config-path <path>] [--named-addresses <addresses>]
+
+Options:
+  --network           Target network (mainnet/testnet/devnet/localnet)
+  --config-path       Config file path (default: "dubhe.config.ts")
+  --named-addresses   Named addresses in format "name1=address1,name2=address2"
+```
+
+### `localnode`
+
+Manage local Initia node.
+
+```bash
+dubhe localnode <action> [options]
+
+Actions:
+  start     Start local node
+  stop      Stop local node
+  status    Check node status
+  restart   Restart local node
+  clean     Clean local node state
+
+Options:
+  --background, -b    Run node in background mode
+```
+
+Local RPC endpoint: `http://127.0.0.1:9000`
+
+Note: Make sure your local node is running properly before using other commands that require a local node (e.g., `publish --network localnet`).
+
+### `faucet`
+
+Request test tokens from the Initia faucet. The default faucet service automatically gives test tokens to accounts in `.env`.
+
+```bash
+dubhe faucet --network <network> [--recipient <address>]
+
+Options:
+  --network     Network to request tokens on (testnet/devnet/localnet, default: localnet)
+  --recipient   Optional recipient address (uses PRIVATE_KEY env if not specified)
+```
+
+The faucet will:
+
+1. Fund the specified address with 10 INIT
+2. Wait for transaction confirmation
+3. Display the updated balance
+
+### `test`
+
+Run tests for Dubhe contracts.
+
+```bash
+dubhe test [--package-path <path>]
+
+Options:
+  --package-path    Path to package directory (default: ".")
+```
+
+## Environment Setup
+
+Some commands require environment variables to be set:
+
+- `PRIVATE_KEY`: Required for deployment and faucet operations when no recipient is specified
+- Can be set up using a `.env` file in your project root
+
+When using the deployer or faucet, you must set the private key using the `PRIVATE_KEY` environment variable. You can make this easier by using [`dotenv`](https://www.npmjs.com/package/dotenv) before running commands.
+
+## Network Support
+
+The CLI supports the following networks:
+
+- Mainnet
+- Testnet
+- Devnet
+- Localnet
+
+For testnet/devnet/localnet operations, you can get test tokens using the `faucet` command.

@@ -1,0 +1,218 @@
+---
+title: Client - Dubhe
+description: Learn how to use the Rooch SDK.
+---
+
+# Dubhe Client SDK for Rooch
+
+Before getting started with Dubhe Client SDK, please install the required dependencies:
+
+```bash
+pnpm install @0xobelisk/rooch-client @0xobelisk/rooch-common
+```
+
+> Note: @0xobelisk/rooch-common contains essential configuration type definitions like DubheConfig, which are necessary for contract development.
+
+Dubhe provides a client SDK for interacting with Rooch Move contracts across various platforms including browsers, Node.js, and COCOS game engine.
+
+## Getting Started
+
+### Prerequisites
+
+Before using the SDK, ensure you have:
+
+1. Created and deployed your contract using the Dubhe CLI
+2. Obtained the `packageId` after deployment
+
+### Data Model Setup
+
+First, define your contract's configuration using `DubheConfig`:
+
+```typescript
+import { DubheConfig } from "@0xobelisk/rooch-common";
+
+export const dubheConfig = {
+  name: "counter",
+  description: "counter",
+  systems: ["counter"],
+  schemas: {
+    counter: {
+      structure: {
+        value: "StorageValue<u32>",
+      },
+    },
+  },
+} as DubheConfig;
+```
+
+Generate the contract code using CLI:
+
+```bash
+pnpm dubhe schemagen
+```
+
+### Initializing the Client
+
+The Dubhe client can be initialized in several ways:
+
+```typescript
+import { Dubhe, NetworkType } from "@0xobelisk/rooch-client";
+
+// Using mnemonics
+const dubhe = new Dubhe({
+  mnemonics: "your mnemonic words...",
+  networkType: "mainnet",
+  packageId: "YOUR_PACKAGE_ID",
+  metadata: metadata,
+});
+
+// Using secret key
+const dubhe = new Dubhe({
+  secretKey: "your-secret-key",
+  networkType: "mainnet",
+  packageId: "YOUR_PACKAGE_ID",
+  metadata: metadata,
+});
+```
+
+### Account Management
+
+The SDK provides comprehensive account management features:
+
+```typescript
+// Get current address
+const address = dubhe.currentAddress();
+
+// Get address in different formats
+const bech32Address = dubhe.getBech32Address();
+const hexAddress = dubhe.getHexAddress();
+const bitcoinAddress = dubhe.getBitcoinAddress();
+
+// Switch account using derive path
+dubhe.switchAccount({
+  accountIndex: 2,
+  isExternal: false,
+  addressIndex: 10,
+});
+
+// Get balance
+const balance = await dubhe.getBalance(address);
+```
+
+### Executing Transactions
+
+To interact with contract methods:
+
+```typescript
+import { Transaction } from "@0xobelisk/rooch-client";
+
+// Create transaction
+const tx = new Transaction();
+
+// Execute transaction
+const response = await dubhe.tx.counter_system.inc({
+  tx,
+  params: ["param1", "param2"],
+  typeArguments: ["type1", "type2"],
+});
+
+// For wallet integration (raw transaction)
+const rawTx = await dubhe.tx.counter_system.inc({
+  tx,
+  params: ["param1", "param2"],
+  typeArguments: ["type1", "type2"],
+  isRaw: true,
+});
+const response = await dubhe.signAndExecuteTransaction(rawTx);
+```
+
+### Querying Data
+
+To query contract state:
+
+```typescript
+// Simple query
+const result = await dubhe.query.counter_system.get({
+  params: ["param1", "param2"],
+  typeArguments: ["type1", "type2"],
+});
+```
+
+### Transaction Structure
+
+Both query and transaction methods accept a parameter structure with the following fields:
+
+```typescript
+{
+  tx: Transaction;           // Required: Transaction instance
+  signer?: Secp256k1Keypair; // Optional: Transaction signer
+  params?: Args[];          // Optional: Array of parameters
+  typeArguments?: TypeTag[]; // Optional: Generic type arguments
+  isRaw?: boolean;          // Optional: Return raw transaction instead of executing
+}
+```
+
+### Chain Interaction
+
+The SDK provides methods to interact with the chain:
+
+```typescript
+// Get chain ID
+const chainId = await dubhe.getChainId();
+
+// Get RPC API version
+const apiVersion = await dubhe.getRpcApiVersion();
+
+// Get network information
+const network = dubhe.getNetwork();
+const nodeUrl = dubhe.getFullNodeUrl();
+
+// Query states
+const states = await dubhe.getStates({
+  // state parameters
+});
+
+// Query events
+const events = await dubhe.getEvents({
+  // event parameters
+});
+```
+
+### Asset Transfer
+
+The SDK supports asset transfers:
+
+```typescript
+// Transfer coins
+await dubhe.transfer({
+  recipient: "recipient-address",
+  amount: 1000,
+  coinType: "0x3::gas_coin::RGas",
+});
+
+// Transfer objects
+await dubhe.transferObject({
+  recipient: "recipient-address",
+  objectId: "object-id",
+  objectType: "object-type",
+});
+```
+
+## Best Practices
+
+1. Always handle transaction responses properly
+2. Implement proper error handling
+3. Use appropriate network types for different environments
+4. Manage account derivation paths carefully
+5. Consider using raw transactions for wallet integrations
+
+## Known Limitations
+
+⚠️ **Important Notes**:
+
+1. Some complex transaction types might require additional handling
+2. Ensure proper error handling for network interactions
+
+## Support
+
+For more information or support, please visit our GitHub repository or join our community channels.

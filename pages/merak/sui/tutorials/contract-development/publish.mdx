@@ -1,0 +1,47 @@
+
+# Publish a contract
+
+After you have written the contract, you can publish it to the blockchain. The contract will be deployed to Sui.
+
+
+```bash
+pnpm dubhe publish --network localnet
+```
+you can see the following output:
+```bash
+➜  pnpm dubhe publish --network localnet
+Active environment switched to [localnet]
+
+Updated Dubhe dependency in /Users/wangningbo/Project/dubhe-template-project/contracts/counter/Move.toml for localnet.
+dappsObjectId 0x4be0e876faea0dfe89a59855dd9bcb69039bf10eca516864ec73e7ec69f96d38
+(node:46776) ExperimentalWarning: The Fetch API is an experimental feature. This feature could change at any time
+(Use `node --trace-warnings ...` to show where the warning was created)
+
+🚀 Starting Contract Publication...
+  ├─ Project: /Users/wangningbo/Project/dubhe-template-project/contracts/counter
+  ├─ Network: localnet
+  ├─ ChainId: 111056d5
+  ├─ Validating Environment...
+  └─ Account: 0x4731bb33cb26a9ad55c3163ada9fc261beb8c238b6e5b062583200a8a6516d1d
+
+📦 Building Contract...
+  └─ Build successful
+
+🔄 Publishing Contract...
+  ├─ Processing publication results...
+  ├─ Schema Hub: 0x513bfeda165402809126b39e1654cbd260dbfbc4bb4e8e31d5fac4975edab9ee
+  ├─ Upgrade Cap: 0x951d53311625d2826b06a25a8b71bfc9b78eda58bf04163240bcb3468bd65f24
+  ├─ Package ID: 0xbecdfd8481e478c4d60c00b8003469acec82d575845da2950f4a2ec1ad15c6da
+  └─ Transaction: 2iohACbU7DpR7ahDFbRqsKTjwmowbSkBQnQ67WG4r9wr
+
+⚡ Executing Deploy Hook...
+  ├─ Hook execution successful
+  ├─ Transaction: Fr2n313GHqiFNXjcKDJFUw5RgxRvBSnLXY4BbwiV4TkN
+
+📋 Created Schemas:
+  ├─ 0xbecdfd8481e478c4d60c00b8003469acec82d575845da2950f4a2ec1ad15c6da::booster_schema::Booster
+     └─ ID: 0xe7cd6dae841254b5c5fcbe3dee18e73b737188c41aeb0b725fa7e1de797a6cba
+Update deploy log: /Users/wangningbo/Project/dubhe-template-project/contracts/counter/.history/sui_localnet/latest.json
+
+✅ Contract Publication Complete
+```

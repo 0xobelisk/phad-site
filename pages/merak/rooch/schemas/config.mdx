@@ -1,0 +1,141 @@
+## Schemas Config & `schemagen` Tool
+
+The `schemagen` CLI tool generates libraries for Schemas. It makes it much less error-prone than using the Schemas low-level API, and comes with typed Move APIs when setting and retrieving records.
+
+### Using `schemagen` with the Dubhe framework
+
+If you are using the Dubhe framework and have a `dubhe.config.ts` file in your project, you can edit your Schemas config directly in this file!
+
+A Schemas config should be named `dubhe.config.ts`, and placed at the root of your project.
+
+This is the minimal config:
+
+```tsx
+import { DubheConfig } from '@0xobelisk/sui-common';
+
+export const dubheConfig = {
+  name: "example", // name of the Move project
+  description: "example desc", // description of the Move project
+  schemas: {}, // an empty config with no schemas，
+} as DubheConfig;
+```
+
+### Generating the schemas
+
+To generate the schemas, run `pnpm dubhe schemagen ./dubhe.config.ts` in the same folder as the config file.
+
+### Schema Data
+
+Currently, Schema supports all the basic types of Move, and will be added later according to the demand.
+
+```tsx
+export const dubheConfig = {
+  name: "example",
+  description: "example desc",
+  schemas: {
+    student_management: {
+        data: [
+          {
+              name: "Class",
+              fields: {
+                    name: "string",
+                    teacher: "string",
+              },
+          },
+          {
+              name: "Student",
+              fields: {
+                    name: "string",
+                    age: "u8",
+                    class: "Class",
+              },
+         }
+      ]
+    }
+  },
+} as DubheConfig;
+```
+### Schema structure
+
+Schema currently supports three storage structures, StorageValue, StorageMap, StorageDoubleMap.
+
+```tsx
+export const dubheConfig = {
+  name: "example",
+  description: "example desc",
+  schemas: {
+    student_management: {
+        data: [
+          {
+              name: "Class",
+              fields: {
+                    name: "string",
+                    teacher: "string",
+              },
+          },
+          {
+              name: "Student",
+              fields: {
+                    name: "string",
+                    age: "u8",
+                    class: "Class",
+              },
+         }
+      ],
+    structure: {
+         next_student_id: 'StorageValue<u32>',
+         student_info: 'StorageMap<u32, Student>',
+     }
+    }
+  },
+} as DubheConfig;
+```
+
+### Schema events
+
+```tsx
+export const dubheConfig = {
+  name: "example",
+  description: "example desc",
+  schemas: {
+    student_management: {
+        data: [
+          {
+              name: "Class",
+              fields: {
+                    name: "string",
+                    teacher: "string",
+              },
+          },
+          {
+              name: "Student",
+              fields: {
+                    name: "string",
+                    age: "u8",
+                    class: "Class",
+              },
+         }
+      ],
+        structure: {
+         next_student_id: 'StorageValue<u32>',
+         student_info: 'StorageMap<u32, Student>',
+     },
+        events: [
+            {
+                name: "StudentAdded",
+                fields: {
+                        student_id: "u32",
+                        student: "Student",
+                },
+            },
+            {
+                name: "StudentRemoved",
+                fields: {
+                        student_id: "u32",
+                },
+            },
+        ]
+    }
+  },
+} as DubheConfig;
+```

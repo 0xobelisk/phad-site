@@ -1,0 +1,3 @@
+export default {
+  "migration": "Migration",
+}

@@ -1,0 +1,96 @@
+# Create A initia Dapp
+
+To begin, open a terminal or console at the location you plan to store your dapp. Use the pnpm create dubhe command to create an initia dapp by dubhe with the name 101:
+
+```bash
+pnpm create dubhe
+```
+
+![create-dapp](/initia/101.png)
+
+Running the previous command creates a directory with the name you provide (101 in this case). The command populates the new directory with a skeleton Move project that consists of a sources directory and a Move.toml manifest file. Open the manifest with a text editor to review its contents:
+
+```toml
+[package]
+name = "counter"
+version = "0.0.1"
+edition = "2024.beta"
+
+[dependencies]
+initia = { git = "https://github.com/MystenLabs/initia.git", subdir = "crates/initia-framework/packages/initia-framework", rev = "mainnet-v1.36.2" }
+Dubhe = { local = "../../localnet/dubhe-framework" }
+
+[addresses]
+initia = "0x2"
+dubhe = "0xe2793ee7dd5f05c73969577b0074f29aae3f70ab33c57dd42681ca29196e6a04"
+counter = "0x0"
+```
+
+The manifest file contents include available sections of the manifest and comments that provide additional information. In Move, you prepend the hash mark (#) to a line to denote a comment.
+
+- [package]: Contains metadata for the package. By default, the initia move new command populates only the name value of the metadata. In this case, the example passes my_first_package to the command, which becomes the name of the package. You can delete the first # of subsequent lines of the [package] section to provide values for the other available metadata fields.
+- [dependencies]: Lists the other packages that your package depends on to run. By default, the initia move new command lists the initia package on GitHub (Testnet version) as the lone dependency.
+- [addresses]: Declares named addresses that your package uses. By default, the section includes the package you create with the initia move new command and an address of 0x0. This value can be left as-is and indicates that package addresses are automatically managed when published and upgraded.
+
+## Defining the Dubhe Config
+
+```bash
+touch 101/dubhe.config.ts
+```
+
+```typescript
+import { DubheConfig } from "@0xobelisk/initia-common";
+
+export const dubheConfig = {
+  name: "counter",
+  description: "counter",
+  systems: ["counter"],
+  schemas: {
+    counter: {
+      structure: {
+        value: "StorageValue<u32>",
+      },
+    },
+  },
+} as DubheConfig;
+```
+
+- [name]: Project name, this configuration attribute determines the name of the package to be generated via the CLI.
+- [description]: Project description, this configuration property determines the description of the project that can be populated in move.toml.
+- [systems]: System List, this configuration attribute determines the number of strings in the array to generate the names of the Move files corresponding to the logical system spac.
+- [schemas]: Data model, this configuration attribute determines the project's ability to generate Move data contracts that are structured and stored in the initia chain.
+
+```bash
+pnpm run schema:gen
+```
+
+The generated project structure looks like this:
+
+```
+contracts/counter/
+├── sources/
+│   ├── codegen/
+│   │   ├── schemas/
+│   │   │   ├── counter.move
+│   │   │   ├── dapp_key.move
+│   │   │   └── schema_hub.move
+│   │   └── script/
+│   │       ├── deploy_hook.move
+│   │       └── migrate.move
+│   └── systems/
+│       └── counter.move
+└── Move.toml
+```
+
+After running `pnpm run schema:gen`, Dubhe CLI will automatically generate the following files:
+
+- `sources/codegen/schemas/`: Contains the generated data model files
+  - `counter.move`: Counter schema implementation
+  - `dapp_key.move`: DApp key definitions
+  - `schema_hub.move`: Schema hub for managing all schemas
+- `sources/codegen/script/`: Contains deployment and migration scripts
+  - `deploy_hook.move`: Deployment hooks
+  - `migrate.move`: Migration logic
+- `sources/systems/`: Contains the system implementation files
+  - `counter.move`: Counter system logic
+- `Move.toml`: Project manifest file
